@@ -1,0 +1,10 @@
+package com.smartbarber.smartbarber.repository;
+
+import com.smartbarber.smartbarber.entity.Barber;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface BarberRepository extends JpaRepository<Barber, Long> {
+
+}

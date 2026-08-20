@@ -14,13 +14,19 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class AppointmentService {
 
-    // tramite @RequiredArgsConstructor, Spring inietta automaticamente questi repository
     private final AppointmentRepository appointmentRepository;
     private final BarberRepository barberRepository;
     private final UserRepository userRepository;
 
     @Transactional
     public Appointment createAppointment(Long userId, Long barberId, LocalDateTime startTime, LocalDateTime endTime) {
+
+        // controlliamo l'overbooking
+        boolean isOccupied = appointmentRepository.checkOverbooking(barberId, startTime, endTime);
+        if (isOccupied) {
+            // se c'è già qualcuno fermiamo tutto
+            throw new RuntimeException("Attenzione: Il barbiere selezionato è già prenotato in questo orario!");
+        }
 
         // recuperiamo l'utente e il barbiere dal database
         var user = userRepository.findById(userId)

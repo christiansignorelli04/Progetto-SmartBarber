@@ -19,12 +19,7 @@ public class AppointmentController {
     public ResponseEntity<Appointment> createAppointment(@RequestBody AppointmentRequestDTO request) {
 
         // passiamo i dati estratti dal DTO al Service
-        Appointment newAppointment = appointmentService.createAppointment(
-                request.getUserId(),
-                request.getBarberId(),
-                request.getStartTime(),
-                request.getEndTime()
-        );
+        Appointment newAppointment = appointmentService.createAppointment(request.getUserId(), request.getBarberId(), request.getStartTime(), request.getEndTime());
 
         // restituiamo al sito web l'esito positivo con il codice HTTP 201 (Created)
         return ResponseEntity.status(HttpStatus.CREATED).body(newAppointment);

@@ -28,12 +28,10 @@ public class AppointmentService {
             throw new RuntimeException("Attenzione: Il barbiere selezionato è già prenotato in questo orario!");
         }
 
-        // recuperiamo l'utente e il barbiere dal database
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
+        // recuperiamo l'utente e il barbiere dal database, con il lock
+        var user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        var barber = barberRepository.findById(barberId)
-                .orElseThrow(() -> new RuntimeException("Barbiere non trovato"));
+        var barber = barberRepository.findByIdWithLock(barberId).orElseThrow(() -> new RuntimeException("Barbiere non trovato"));
 
         // creiamo l'appuntamento e lo leghiamo
         Appointment appointment = new Appointment();

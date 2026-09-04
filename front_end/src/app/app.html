@@ -1,0 +1,87 @@
+<div class="container">
+  <!-- HEADER: Intestazione e pulsanti Login/Logout -->
+  <header>
+    <h1>💈 SmartBarber</h1>
+    <div class="auth-buttons">
+      <!-- Se l'utente NON è loggato, mostriamo il tasto Login -->
+      <button *ngIf="!keycloak.isLoggedIn()" (click)="login()" class="btn-primary">
+        Entra / Registrati
+      </button>
+
+      <!-- Se l'utente È loggato, mostriamo il tasto Logout -->
+      <button *ngIf="keycloak.isLoggedIn()" (click)="logout()" class="btn-danger">
+        Esci
+      </button>
+    </div>
+  </header>
+
+  <!-- SEZIONE PUBBLICA: Visibile solo se NON sei loggato -->
+  <div *ngIf="!keycloak.isLoggedIn()" class="welcome-banner">
+    <h2>Benvenuto su SmartBarber!</h2>
+    <p>Effettua l'accesso per prenotare il tuo prossimo taglio o gestire il tuo profilo.</p>
+  </div>
+
+  <!-- SEZIONE PRIVATA: Visibile SOLO se l'utente è loggato -->
+  <main *ngIf="keycloak.isLoggedIn()">
+
+    <!-- Menu di navigazione tra le schede -->
+    <nav class="tabs">
+      <button (click)="cambiaSezione('prenotazioni')" [class.active]="activeSection === 'prenotazioni'">
+        Le Mie Prenotazioni
+      </button>
+      <button (click)="cambiaSezione('profilo')" [class.active]="activeSection === 'profilo'">
+        Il Mio Profilo
+      </button>
+    </nav>
+
+    <!-- Area per i messaggi di successo o errore -->
+    <div *ngIf="messaggio" class="alert alert-info">{{ messaggio }}</div>
+    <div *ngIf="errore" class="alert alert-error">{{ errore }}</div>
+
+    <!-- SCHEDA: PRENOTAZIONI & BARBIERI -->
+    <section *ngIf="activeSection === 'prenotazioni'" class="content-section">
+
+      <!-- Lista Barbieri (proveniente da Spring Boot) -->
+      <div class="card">
+        <h3>Scegli un Barbiere</h3>
+        <p *ngIf="barbers.length === 0">Nessun barbiere disponibile al momento.</p>
+        <ul class="barber-list">
+          <li *ngFor="let barber of barbers">
+            <strong>{{ barber.name }}</strong>
+            <button class="btn-small">Prenota</button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Lista Prenotazioni dell'utente (proveniente da Spring Boot) -->
+      <div class="card mt-2">
+        <h3>Le tue Prenotazioni</h3>
+        <p *ngIf="appointments.length === 0">Non hai ancora prenotato nessun taglio.</p>
+        <ul>
+          <li *ngFor="let app of appointments">
+            Taglio con il barbiere ID: {{ app.barberId }} il {{ app.date }}
+          </li>
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- SCHEDA: PROFILO UTENTE -->
+    <section *ngIf="activeSection === 'profilo'" class="content-section">
+      <div class="card">
+        <h2>I tuoi dati</h2>
+
+        <div *ngIf="userProfile">
+          <p><strong>Nome:</strong> {{ userProfile.firstName }} {{ userProfile.lastName }}</p>
+          <p><strong>Email:</strong> {{ userProfile.email }}</p>
+          <p><strong>Telefono:</strong> {{ userProfile.phoneNumber }}</p>
+        </div>
+
+        <div *ngIf="!userProfile">
+          <p>Devi ancora completare il tuo profilo! (Qui in futuro metteremo il form di registrazione)</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>

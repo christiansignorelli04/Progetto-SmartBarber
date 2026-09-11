@@ -4,9 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @NoArgsConstructor
@@ -20,21 +19,24 @@ public class Appointment {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate date; // data dell'appuntamento
+    private LocalDate date;
 
     @Column(nullable = false)
-    private LocalDateTime startTime; // orario di inizio
+    private LocalTime startTime;
 
     @Column(nullable = false)
-    private LocalDateTime endTime; // orario di fine
+    private LocalTime endTime;
 
-    // relazioni con altre tabelle
-
+    // relazioni
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // il cliente che prenota
 
     @ManyToOne
     @JoinColumn(name = "barber_id", nullable = false)
-    private Barber barber; // il barbiere prenotato
+    private Barber barber; // l'operatore specifico scelto
+
+    @ManyToOne
+    @JoinColumn(name = "treatment_id", nullable = false)
+    private Treatment treatment; // tipo di trattamento
 }

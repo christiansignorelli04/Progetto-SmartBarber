@@ -3,7 +3,6 @@ package com.smartbarber.smartbarber.repository;
 import com.smartbarber.smartbarber.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.Optional;
 
 @Repository

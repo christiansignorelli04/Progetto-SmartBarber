@@ -9,8 +9,8 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "barbers")
-public class Barber {
+@Table(name = "salons")
+public class Salon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +20,15 @@ public class Barber {
     private String name;
 
     @Column(nullable = false)
-    private boolean available = true; // di default è disponibile
+    private String city;
 
-    // relazione dove ogni barbiere lavora in un salone
+    @Column(nullable = false)
+    private String address;
+
+    @Column(name = "closed_days")
+    private String closedDays;
+
     @ManyToOne
-    @JoinColumn(name = "salon_id", nullable = false)
-    private Salon salon;
+    @JoinColumn(name = "owner_id")
+    private User owner;
 }

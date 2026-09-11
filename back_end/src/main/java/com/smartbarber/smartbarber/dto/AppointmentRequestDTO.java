@@ -1,15 +1,14 @@
 package com.smartbarber.smartbarber.dto;
 
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 public class AppointmentRequestDTO {
-
-    // dati per fare la prenotazione
     private Long userId;
-    private Long barberId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-
+    private Long barberId;     // l'operatore scelto
+    private Long treatmentId;  // il trattamento scelto
+    private LocalDate date;    // la data
+    private LocalTime startTime; // l'ora esatta dello slot
 }

@@ -48,4 +48,13 @@ export class KeycloakService {
   email(): string {
     return (this.keycloak.tokenParsed?.["email"] as string) || "";
   }
+
+  hasRole(role: string): boolean {
+    // controllo se l'utente ha il ruolo nei Realm roles di Keycloak
+    const realmAccess = this.keycloak.realmAccess;
+    if (realmAccess && realmAccess.roles) {
+      return realmAccess.roles.includes(role);
+    }
+    return false;
+  }
 }

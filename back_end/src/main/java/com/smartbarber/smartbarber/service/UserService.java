@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -14,19 +15,24 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    // recupera tutti gli utenti (la usa solo l'admin)
+    // recupero tutti gli utenti, lo usa solo l'admin
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // recupera un singolo utente tramite ID
+    // recupero un singolo utente tramite ID
     public User getUserById(Long id) {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Utente non trovato nel database"));
     }
 
-    // registra un nuovo utente nel sistema
+    // registro o aggiorno un utente nel sistema
     @Transactional
     public User createUser(User user) {
         return userRepository.save(user);
+    }
+
+    // faccio una ricerca tramite Keycloak ID
+    public Optional<User> findByKeycloakId(String keycloakId) {
+        return userRepository.findByKeycloakId(keycloakId);
     }
 }

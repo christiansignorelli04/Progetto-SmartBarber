@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,4 +17,7 @@ public interface BarberRepository extends JpaRepository<Barber, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Barber b WHERE b.id = :id")
     Optional<Barber> findByIdWithLock(@Param("id") Long id);
+
+    // trovo tutti i dipendenti di un determinato salone
+    List<Barber> findBySalonId(Long salonId);
 }

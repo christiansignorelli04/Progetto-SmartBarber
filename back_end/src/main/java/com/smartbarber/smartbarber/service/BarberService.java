@@ -1,39 +1,38 @@
 package com.smartbarber.smartbarber.service;
 
 import com.smartbarber.smartbarber.entity.Barber;
+import com.smartbarber.smartbarber.entity.Salon;
 import com.smartbarber.smartbarber.repository.BarberRepository;
+import com.smartbarber.smartbarber.repository.SalonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BarberService {
 
     private final BarberRepository barberRepository;
+    private final SalonRepository salonRepository; // lo uso per trovare il salone del gestore
 
-    // recupera solo i barbieri attivi
-    public List<Barber> getAvailableBarbers() {
-        return barberRepository.findAll().stream().filter(Barber::isAvailable).collect(Collectors.toList());
+    public List<Barber> getAvailableBarbersBySalon(Long salonId) {
+        return barberRepository.findBySalonId(salonId);
     }
 
-    // aggiunge un nuovo barbiere
+    // aggiungo un barbiere al salone del gestore loggato
     @Transactional
-    public Barber addBarber(String name) {
+    public Barber addBarberToMySalon(String name, String ownerKeycloakId) {
+
+        // trovo il salone di proprietà di chi sta facendo la richiesta
+        Salon mySalon = salonRepository.findByOwnerKeycloakId(ownerKeycloakId)
+                .orElseThrow(() -> new RuntimeException("Devi prima creare il tuo salone nell'Area Business prima di poter aggiungere barbieri!"));
+
+        // creao il barbiere e lo leghiamo indissolubilmente a questo salone
         Barber barber = new Barber();
         barber.setName(name);
-        barber.setAvailable(true);
-        return barberRepository.save(barber);
-    }
+        barber.setSalon(mySalon);
 
-    // non cancello il record ma metto il barbiere in ferie
-    @Transactional
-    public void softDeleteBarber(Long id) {
-        Barber barber = barberRepository.findById(id).orElseThrow(() -> new RuntimeException("Barbiere non trovato"));
-        barber.setAvailable(false);
-        barberRepository.save(barber);
+        return barberRepository.save(barber);
     }
 }

@@ -1,87 +1,262 @@
-<div class="container">
-  <!-- HEADER: Intestazione e pulsanti Login/Logout -->
-  <header>
-    <h1>💈 SmartBarber</h1>
-    <div class="auth-buttons">
-      <!-- Se l'utente NON è loggato, mostriamo il tasto Login -->
-      <button *ngIf="!keycloak.isLoggedIn()" (click)="login()" class="btn-primary">
-        Entra / Registrati
-      </button>
+<mat-toolbar color="primary">
+  <span>💈 SmartBarber</span>
+  <span class="spacer" style="flex: 1 1 auto;"></span>
 
-      <!-- Se l'utente È loggato, mostriamo il tasto Logout -->
-      <button *ngIf="keycloak.isLoggedIn()" (click)="logout()" class="btn-danger">
-        Esci
-      </button>
-    </div>
-  </header>
+  <!-- *ngIf crea il bottone solo se l'utente non è loggato -->
+  <ng-container *ngIf="!keycloak.isLoggedIn()">
+    <!-- tramite l'event  binding catturo l'evento del mouse e invoco il metodo login() nel file TypeScript -->
+    <button mat-flat-button color="accent" (click)="login()">Entra / Registrati</button>
+  </ng-container>
 
-  <!-- SEZIONE PUBBLICA: Visibile solo se NON sei loggato -->
-  <div *ngIf="!keycloak.isLoggedIn()" class="welcome-banner">
+  <!-- il blocco esiste solo se l'utente È loggato -->
+  <ng-container *ngIf="keycloak.isLoggedIn()">
+    <!-- il bottone Area Business appare solo se il token JWT che viene letto da Keycloak, contiene l'Authority SHOP_OWNER -->
+    <button mat-button *ngIf="keycloak.hasRole('SHOP_OWNER') && activeSection !== 'gestore'" (click)="cambiaSezione('gestore')" style="color: #ffeb3b; font-weight: bold; margin-right: 15px;">
+      <mat-icon>store</mat-icon> Area Business
+    </button>
+    <button mat-button *ngIf="activeSection !== 'profilo'" (click)="cambiaSezione('profilo')">
+      <mat-icon>person</mat-icon> Il Mio Profilo
+    </button>
+    <button mat-button *ngIf="activeSection !== 'prenotazioni'" (click)="cambiaSezione('prenotazioni')">
+      <mat-icon>home</mat-icon> Home
+    </button>
+    <button mat-stroked-button (click)="logout()" style="margin-left: 10px;">
+      <mat-icon>logout</mat-icon> Esci
+    </button>
+  </ng-container>
+</mat-toolbar>
+
+<!-- contenuto principale della pagina -->
+<div class="container" style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+
+  <div *ngIf="!keycloak.isLoggedIn()" class="welcome-banner" style="text-align: center;">
     <h2>Benvenuto su SmartBarber!</h2>
-    <p>Effettua l'accesso per prenotare il tuo prossimo taglio o gestire il tuo profilo.</p>
+    <p>Effettua l'accesso per prenotare il tuo prossimo taglio.</p>
   </div>
 
-  <!-- SEZIONE PRIVATA: Visibile SOLO se l'utente è loggato -->
   <main *ngIf="keycloak.isLoggedIn()">
+    <!-- uso l'interpolazione per stampare a schermo il contenuto esatto delle variabili di stato messaggio e errore definite in app.ts -->
+    <div *ngIf="messaggio" class="alert alert-info" style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; color: #0d47a1; border-radius: 5px;">{{ messaggio }}</div>
+    <div *ngIf="errore" class="alert alert-error" style="margin-bottom: 20px; padding: 15px; background: #ffebee; color: #b71c1c; border-radius: 5px;">{{ errore }}</div>
 
-    <!-- Menu di navigazione tra le schede -->
-    <nav class="tabs">
-      <button (click)="cambiaSezione('prenotazioni')" [class.active]="activeSection === 'prenotazioni'">
-        Le Mie Prenotazioni
-      </button>
-      <button (click)="cambiaSezione('profilo')" [class.active]="activeSection === 'profilo'">
-        Il Mio Profilo
-      </button>
-    </nav>
+    <!-- prenotazioni e saloni -->
+    <section *ngIf="activeSection === 'prenotazioni'">
 
-    <!-- Area per i messaggi di successo o errore -->
-    <div *ngIf="messaggio" class="alert alert-info">{{ messaggio }}</div>
-    <div *ngIf="errore" class="alert alert-error">{{ errore }}</div>
+      <mat-card class="mb-3" *ngIf="faseAttuale === 'ricerca'">
+        <mat-card-header><mat-card-title>Cerca un Salone</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <div style="margin-top: 15px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+            <mat-form-field appearance="outline" style="flex: 1;"><mat-label>Inserisci la tua città</mat-label>
+              <input matInput [(ngModel)]="cittaRicercata" (ngModelChange)="onSearchChange()" (keyup.enter)="avviaRicerca()" placeholder="Scrivi la città e premi Invio">
+            </mat-form-field>
+            <button mat-flat-button color="primary" style="height: 56px; margin-bottom: 22px;" (click)="avviaRicerca()"><mat-icon>search</mat-icon> Cerca</button>
+          </div>
 
-    <!-- SCHEDA: PRENOTAZIONI & BARBIERI -->
-    <section *ngIf="activeSection === 'prenotazioni'" class="content-section">
+          <p *ngIf="!ricercaEffettuata" style="text-align: center; color: gray; margin-top: 20px;">Inserisci una città per visualizzare i saloni.</p>
+          <p *ngIf="ricercaEffettuata && salons.length === 0" style="text-align: center; color: red; margin-top: 20px;">Spiacenti, nessun salone trovato a "{{ cittaRicercata }}".</p>
 
-      <!-- Lista Barbieri (proveniente da Spring Boot) -->
-      <div class="card">
-        <h3>Scegli un Barbiere</h3>
-        <p *ngIf="barbers.length === 0">Nessun barbiere disponibile al momento.</p>
-        <ul class="barber-list">
-          <li *ngFor="let barber of barbers">
-            <strong>{{ barber.name }}</strong>
-            <button class="btn-small">Prenota</button>
-          </li>
-        </ul>
-      </div>
+          <mat-list *ngIf="ricercaEffettuata && salons.length > 0">
+            <h3 style="margin-top: 10px; margin-bottom: 15px;">Saloni trovati:</h3>
 
-      <!-- Lista Prenotazioni dell'utente (proveniente da Spring Boot) -->
-      <div class="card mt-2">
-        <h3>Le tue Prenotazioni</h3>
-        <p *ngIf="appointments.length === 0">Non hai ancora prenotato nessun taglio.</p>
-        <ul>
-          <li *ngFor="let app of appointments">
-            Taglio con il barbiere ID: {{ app.barberId }} il {{ app.date }}
-          </li>
-        </ul>
-      </div>
+            <!-- uso *ngFor e Angular itera sull'array salons clonando questo blocco per ogni elemento, inoltre uso la pipe '| titlecase'
+                 sulla città per formattare il testo senza alterare i dati -->
+            <mat-list-item *ngFor="let salon of salons" style="border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; height: auto; padding: 15px 10px;">
+              <div style="display: flex; flex-direction: column; justify-content: center;">
+                <span style="font-size: 1.1em; font-weight: bold; color: #333;">{{ salon.name }}</span>
+                <span style="color: gray; font-size: 0.9em; margin-top: 4px;">📍 {{ salon.address }} - {{ salon.city | titlecase }}</span>
+              </div>
+              <button mat-flat-button color="primary" matListItemMeta style="color: white;" (click)="apriSalone(salon)">Vedi Salone</button>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
 
+      <!-- prenotazione -->
+      <mat-card class="mb-3" *ngIf="faseAttuale === 'prenotazione' && saloneSelezionato">
+        <mat-card-header style="display: flex; justify-content: space-between; align-items: center;">
+          <mat-card-title style="margin:0; font-size: 1.5em;">{{ saloneSelezionato.name }}</mat-card-title>
+          <button mat-stroked-button color="warn" (click)="tornaAllaRicerca()"><mat-icon>arrow_back</mat-icon> Indietro</button>
+        </mat-card-header>
+        <mat-card-content style="margin-top: 20px;">
+          <p style="color: gray; margin-bottom: 30px;">📍 {{ saloneSelezionato.address }}, {{ saloneSelezionato.city | titlecase }}</p>
+
+          <h3 style="font-weight: bold; color: #3f51b5;">1. Seleziona il Servizio</h3>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px;">
+            <button *ngFor="let t of trattamentiSalone" mat-stroked-button [color]="trattamentoSceltoId === t.id ? 'primary' : ''" [style.background-color]="trattamentoSceltoId === t.id ? '#e8eaf6' : 'transparent'" (click)="trattamentoSceltoId = t.id">{{ t.name }} - €{{ t.price }}</button>
+            <p *ngIf="trattamentiSalone.length === 0" style="color:gray; font-size:0.9em;">Nessun servizio disponibile.</p>
+          </div>
+
+          <h3 style="font-weight: bold; color: #3f51b5;">2. Scegli il tuo Barbiere</h3>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px;">
+            <button *ngFor="let b of operatoriSalone" mat-stroked-button [color]="operatoreSceltoId === b.id ? 'primary' : ''" [style.background-color]="operatoreSceltoId === b.id ? '#e8eaf6' : 'transparent'" (click)="operatoreSceltoId = b.id; aggiornaDisponibilita()"><mat-icon style="margin-right: 5px;">content_cut</mat-icon> {{ b.name }}</button>
+            <p *ngIf="operatoriSalone.length === 0" style="color:gray; font-size:0.9em;">Nessun operatore disponibile.</p>
+          </div>
+
+          <h3 style="font-weight: bold; color: #3f51b5;">3. Scegli Data e Ora</h3>
+          <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+            <label style="font-weight: bold; color: #555;">Seleziona Giorno:</label>
+
+            <!-- implemento la logica di business nel frontend e la reattività al comando dato dal client usando il property binding [min] per impedire di cliccare il giorno passato,
+                 e l'event binding (change) quando l'utente cambia data, e la UI reagisce lanciando aggiornaDisponibilita() che chiama Spring Boot -->
+            <input type="date" [(ngModel)]="dataScelta" [min]="oggi" (change)="aggiornaDisponibilita()" style="padding: 10px; font-size: 1.1em; border: 1px solid #ccc; border-radius: 5px; width: 200px;">
+
+            <label style="font-weight: bold; color: #555; margin-top: 10px;">Seleziona Orario:</label>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <ng-container *ngFor="let ora of orariDisponibili">
+                <!-- stampo il bottone dell'orario solo se quell'orario non è presente nell'array orariOccupati che è stato scaricato precedentemente da Spring Boot -->
+                <button *ngIf="!orariOccupati.includes(ora)"
+                        mat-stroked-button [color]="oraScelta === ora ? 'primary' : ''" [style.background-color]="oraScelta === ora ? '#e8eaf6' : 'transparent'" (click)="oraScelta = ora">
+                  {{ ora }}
+                </button>
+              </ng-container>
+            </div>
+            <!-- do un feedback immediato all'utente in caso di tutto esaurito -->
+            <p *ngIf="dataScelta && operatoreSceltoId && orariOccupati.length === orariDisponibili.length" style="color: red; font-weight: bold;">
+              Nessun orario disponibile per questo barbiere in questa data.
+            </p>
+          </div>
+          <button mat-flat-button color="primary" style="width: 100%; height: 50px; font-size: 1.2em; font-weight: bold;" (click)="confermaPrenotazione()">Conferma Prenotazione</button>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- lista delle prenotazioni -->
+      <mat-card style="margin-top: 20px;" *ngIf="faseAttuale === 'ricerca'">
+        <mat-card-header><mat-card-title>I tuoi Appuntamenti</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <h3 style="margin-top: 15px; color: #3f51b5;">In Arrivo</h3>
+          <p *ngIf="appuntamentiFuturi.length === 0" style="color: gray;">Nessun appuntamento futuro.</p>
+          <mat-list>
+            <mat-list-item *ngFor="let app of appuntamentiFuturi" style="border-bottom: 1px solid #f0f0f0;">
+              <span matListItemTitle><strong>{{ app.date }}</strong> alle {{ app.startTime }}</span>
+              <span matListItemLine style="color: gray;">Operatore: {{ app.barber?.name }} | Trattamento: {{ app.treatment?.name }}</span>
+              <button mat-icon-button color="warn" matListItemMeta (click)="apriPopupCancellazione(app.id)"><mat-icon>cancel</mat-icon></button>
+            </mat-list-item>
+          </mat-list>
+          <h3 style="margin-top: 25px; color: gray;">Storico Passato</h3>
+          <p *ngIf="appuntamentiPassati.length === 0" style="color: gray;">Nessun appuntamento nello storico.</p>
+          <mat-list>
+            <mat-list-item *ngFor="let app of appuntamentiPassati" style="opacity: 0.6; border-bottom: 1px solid #f0f0f0;">
+              <span matListItemTitle>{{ app.date }} alle {{ app.startTime }}</span>
+              <span matListItemLine>Operatore: {{ app.barber?.name }} | Trattamento: {{ app.treatment?.name }}</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
     </section>
 
-    <!-- SCHEDA: PROFILO UTENTE -->
-    <section *ngIf="activeSection === 'profilo'" class="content-section">
-      <div class="card">
-        <h2>I tuoi dati</h2>
+    <!-- profilo-->
+    <section *ngIf="activeSection === 'profilo'">
+      <mat-card>
+        <mat-card-header><mat-card-title>Il tuo Profilo</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <!-- VIEW MODE -->
+          <div *ngIf="userProfile && !isEditingProfile" style="margin-top: 20px; font-size: 1.1em;">
+            <p><strong>Nome:</strong> {{ userProfile.firstName }} {{ userProfile.lastName }}</p>
+            <p><strong>Email:</strong> {{ userProfile.email }}</p>
+            <p><strong>Telefono:</strong> {{ userProfile.phoneNumber }}</p>
+            <button mat-flat-button color="primary" style="margin-top: 20px;" (click)="attivaModificaProfilo()">Modifica Profilo</button>
+          </div>
 
-        <div *ngIf="userProfile">
-          <p><strong>Nome:</strong> {{ userProfile.firstName }} {{ userProfile.lastName }}</p>
-          <p><strong>Email:</strong> {{ userProfile.email }}</p>
-          <p><strong>Telefono:</strong> {{ userProfile.phoneNumber }}</p>
+          <!-- modifica del profilo del cliente -->
+          <div *ngIf="!userProfile || isEditingProfile" style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+            <p *ngIf="!userProfile" style="color: #d32f2f; font-weight: bold;">Completa i tuoi dati per poter prenotare un taglio!</p>
+            <p *ngIf="isEditingProfile" style="color: #1976d2; font-weight: bold;">Modifica i tuoi dati.</p>
+            <!-- i campi input sono collegati all'oggetto DTO profiloForm tramite [(ngModel)] che fa da ponte tra HTML e TypeScript-->
+            <mat-form-field appearance="outline"><mat-label>Nome</mat-label><input matInput [(ngModel)]="profiloForm.firstName"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Cognome</mat-label><input matInput [(ngModel)]="profiloForm.lastName"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput [(ngModel)]="profiloForm.email"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Telefono</mat-label><input matInput [(ngModel)]="profiloForm.phoneNumber"></mat-form-field>
+            <div style="display: flex; gap: 15px;">
+              <button mat-stroked-button *ngIf="isEditingProfile" (click)="annullaModificaProfilo()">Annulla</button>
+              <button mat-flat-button color="primary" (click)="salvaProfilo()">Salva Profilo</button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <!-- pannello del gestore -->
+    <section *ngIf="activeSection === 'gestore'">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <!-- creo la card del salone-->
+          <mat-card>
+            <mat-card-header><mat-card-title>1. Dati Salone</mat-card-title></mat-card-header>
+            <mat-card-content style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+              <mat-form-field appearance="outline"><mat-label>Nome Salone</mat-label><input matInput [(ngModel)]="newSalonName"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Città</mat-label><input matInput [(ngModel)]="newSalonCity"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Indirizzo</mat-label><input matInput [(ngModel)]="newSalonAddress"></mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Giorni di Chiusura</mat-label>
+                <mat-select [(ngModel)]="newSalonClosedDays" multiple>
+                  <mat-option value="1">Lunedì</mat-option>
+                  <mat-option value="2">Martedì</mat-option>
+                  <mat-option value="3">Mercoledì</mat-option>
+                  <mat-option value="4">Giovedì</mat-option>
+                  <mat-option value="5">Venerdì</mat-option>
+                  <mat-option value="6">Sabato</mat-option>
+                  <mat-option value="0">Domenica</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-flat-button color="primary" (click)="aggiungiSalone()">Crea Salone</button>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card>
+            <mat-card-header><mat-card-title>2. Assumi Personale</mat-card-title></mat-card-header>
+            <mat-card-content style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+              <mat-form-field appearance="outline"><mat-label>Nome Barbiere</mat-label><input matInput [(ngModel)]="newBarberName"></mat-form-field>
+              <button mat-flat-button color="accent" (click)="aggiungiBarbiereGestore()">Aggiungi Barbiere</button>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card>
+            <mat-card-header><mat-card-title>3. Nuovo Servizio</mat-card-title></mat-card-header>
+            <mat-card-content style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+              <mat-form-field appearance="outline"><mat-label>Nome (es. Taglio)</mat-label><input matInput [(ngModel)]="newTreatmentName"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Prezzo (€)</mat-label><input matInput type="number" [(ngModel)]="newTreatmentPrice"></mat-form-field>
+              <button mat-flat-button color="accent" (click)="aggiungiTrattamentoGestore()">Aggiungi al Listino</button>
+            </mat-card-content>
+          </mat-card>
         </div>
 
-        <div *ngIf="!userProfile">
-          <p>Devi ancora completare il tuo profilo! (Qui in futuro metteremo il form di registrazione)</p>
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+          <mat-card style="text-align: center; padding: 20px; background-color: #f5f5f5;">
+            <h2 style="color: gray; margin: 0 0 10px 0;">Totale Appuntamenti</h2>
+            <div style="font-size: 4rem; line-height: 1; color: #3f51b5; font-weight: bold;">{{ totaleAppuntamenti }}</div>
+          </mat-card>
+          <mat-card style="flex: 1;">
+            <mat-card-header><mat-card-title>Calendario Prenotazioni</mat-card-title></mat-card-header>
+            <mat-card-content style="margin-top: 15px; max-height: 600px; overflow-y: auto;">
+              <p *ngIf="appuntamentiGestore.length === 0" style="color: gray; text-align: center;">Ancora nessuna prenotazione.</p>
+              <mat-list>
+                <mat-list-item *ngFor="let app of appuntamentiGestore" style="border-bottom: 1px solid #eee; padding: 10px 0; height: auto;">
+                  <div style="display: flex; flex-direction: column;">
+                    <span style="color: #3f51b5; font-weight: bold; font-size: 1.1em;">{{ app.date }} alle {{ app.startTime }}</span>
+                    <span><strong>Cliente:</strong> {{ app.user?.firstName }} {{ app.user?.lastName }} ({{ app.user?.phoneNumber }})</span>
+                    <span style="color: gray; font-size: 0.9em;"><strong>Barbiere:</strong> {{ app.barber?.name }} | <strong>Servizio:</strong> {{ app.treatment?.name }}</span>
+                  </div>
+                </mat-list-item>
+              </mat-list>
+            </mat-card-content>
+          </mat-card>
         </div>
       </div>
     </section>
-
   </main>
+</div>
+
+<!-- creo un popup di conferma cancellazione, se la variabile mostraPopupCancellazione diventa true nel Controller, Angular inietta
+     questo blocco di div sopra al resto dell'app, oscurando lo sfondo. -->
+<div *ngIf="mostraPopupCancellazione" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+  <mat-card style="width: 400px; padding: 20px; text-align: center; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+    <mat-icon style="font-size: 50px; height: 50px; width: 50px; color: #f44336; margin-bottom: 15px;">warning</mat-icon>
+    <h2 style="margin: 0 0 10px 0; color: #333;">Sei sicuro?</h2>
+    <p style="color: gray; margin-bottom: 25px;">Vuoi davvero disdire questo appuntamento? L'azione non è reversibile.</p>
+    <div style="display: flex; gap: 15px; justify-content: center;">
+      <button mat-stroked-button (click)="chiudiPopupCancellazione()" style="padding: 20px 30px;">Indietro</button>
+      <button mat-flat-button color="warn" (click)="confermaCancellazione()" style="padding: 20px 30px;">Sì, Disdici</button>
+    </div>
+  </mat-card>
 </div>

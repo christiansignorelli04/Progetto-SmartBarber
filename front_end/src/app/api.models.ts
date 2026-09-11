@@ -1,17 +1,31 @@
 /*
- Qui definisco tutte le interfacce che descrivono le strutture dati scambiate con il BackEnd Spring Boot.
- Le interfacce TypeScript non creano oggetti durante l'esecuzione, ma servono solo al
- compilatore per controllare che i tipi e i campi siano corretti.
+ Qui definisco tutte le interfacce che descrivono le strutture dati scambiate con il BackEnd Spring Boot
 */
 
-// barbiere
+// il salone
+export interface Salon {
+  id: number;
+  name: string;
+  city: string;
+  address: string;
+  closedDays?: string;
+}
+
+// il barbiere
 export interface Barber {
   id: number;
   name: string;
   available: boolean;
 }
 
-// utente
+// il trattamento
+export interface Treatment {
+  id: number;
+  name: string;
+  price: number;
+}
+
+// l'utente
 export interface UserRequest {
   email: string;
   firstName: string;
@@ -25,12 +39,13 @@ export interface User extends UserRequest {
   role: string;
 }
 
-// prenotazione
+// la prenotazione
 export interface AppointmentRequest {
-  barberId: number;
-  date: string; // Formato anno-mese-giorno
-  startTime: string; // Formato anno-mese-giornoTora:minuti:secondi
-  endTime: string;   // Formato anno-mese-giornoTora:minuti:secondi
+  userId: number; // il backend lo richiede nel DTO
+  barberId: number; // l'operatore scelto
+  treatmentId: number; // il servizio scelto
+  date: string; // formato anno-mese-giorno
+  startTime: string; // formato ore:minuti
 }
 
 export interface Appointment {
@@ -38,12 +53,7 @@ export interface Appointment {
   date: string;
   startTime: string;
   endTime: string;
-
-  // altre informazioni che arriveranno dal backend
-  userId: number;
-  userFirstName: string;
-  userLastName: string;
-
-  barberId: number;
-  barberName: string;
+  user: User;
+  barber: Barber;
+  treatment: Treatment;
 }

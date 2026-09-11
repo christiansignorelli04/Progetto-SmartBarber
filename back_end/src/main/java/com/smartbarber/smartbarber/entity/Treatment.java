@@ -9,20 +9,20 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "barbers")
-public class Barber {
+@Table(name = "treatments")
+public class Treatment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String name; // "Taglio", "Barba", "Taglio + Barba"
 
     @Column(nullable = false)
-    private boolean available = true; // di default è disponibile
+    private double price; //  15.00, 8.00, 18.00
 
-    // relazione dove ogni barbiere lavora in un salone
+    // ogni trattamento appartiene al listino di un salone
     @ManyToOne
     @JoinColumn(name = "salon_id", nullable = false)
     private Salon salon;

@@ -18,7 +18,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
 
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
-        // estraiamo i ruoli dal token JWT
+        // estraggo i ruoli dal token JWT
         Collection<GrantedAuthority> roles = extractRealmRoles(jwt);
         return new JwtAuthenticationToken(jwt, roles, getPrincipalClaimName(jwt));
     }
@@ -30,7 +30,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         }
 
         Collection<String> roles = (Collection<String>) realmAccess.get("roles");
-        // converte i ruoli in "Authority" per Spring
+        // converto i ruoli in "Authority" per Spring
         return roles.stream().map(role -> new SimpleGrantedAuthority(role)).collect(Collectors.toSet());
     }
 

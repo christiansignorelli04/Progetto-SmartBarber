@@ -22,6 +22,8 @@ public class Barber {
     @Column(nullable = false)
     private boolean available = true; // di default è disponibile
 
+    private boolean isActive = true; // di default un barbiere è attivo quando lo si assume
+
     // relazione dove ogni barbiere lavora in un salone
     @ManyToOne
     @JoinColumn(name = "salon_id", nullable = false)

@@ -17,7 +17,7 @@ public class BarberService {
     private final SalonRepository salonRepository; // lo uso per trovare il salone del gestore
 
     public List<Barber> getAvailableBarbersBySalon(Long salonId) {
-        return barberRepository.findBySalonId(salonId);
+        return barberRepository.findBySalonIdAndIsActiveTrue(salonId);
     }
 
     // aggiungo un barbiere al salone del gestore loggato
@@ -34,5 +34,23 @@ public class BarberService {
         barber.setSalon(mySalon);
 
         return barberRepository.save(barber);
+    }
+
+    @Transactional
+    public void softDeleteBarber(Long id) {
+        Barber barber = barberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Barbiere non trovato"));
+
+        barber.setActive(false); // faccio un Soft Delete
+        barberRepository.save(barber);
+    }
+
+    public List<Barber> getMyBarbers(String ownerKeycloakId) {
+        Salon mySalon = salonRepository.findByOwnerKeycloakId(ownerKeycloakId).orElse(null);
+        if (mySalon == null) {
+            return List.of();
+        }
+        // uso la query creata prima per prendere solo quelli non licenziati
+        return barberRepository.findBySalonIdAndIsActiveTrue(mySalon.getId());
     }
 }

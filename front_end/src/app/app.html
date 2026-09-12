@@ -149,7 +149,7 @@
       <mat-card>
         <mat-card-header><mat-card-title>Il tuo Profilo</mat-card-title></mat-card-header>
         <mat-card-content>
-          <!-- VIEW MODE -->
+          <!-- modalità lettura -->
           <div *ngIf="userProfile && !isEditingProfile" style="margin-top: 20px; font-size: 1.1em;">
             <p><strong>Nome:</strong> {{ userProfile.firstName }} {{ userProfile.lastName }}</p>
             <p><strong>Email:</strong> {{ userProfile.email }}</p>
@@ -208,6 +208,23 @@
             <mat-card-content style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
               <mat-form-field appearance="outline"><mat-label>Nome Barbiere</mat-label><input matInput [(ngModel)]="newBarberName"></mat-form-field>
               <button mat-flat-button color="accent" (click)="aggiungiBarbiereGestore()">Aggiungi Barbiere</button>
+
+              <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+              <h4 style="margin: 10px 0;">Personale Attivo</h4>
+              <!-- se non ci sono barbieri -->
+              <p *ngIf="barbieri.length === 0" style="color: gray; font-size: 14px;">
+                Nessun barbiere presente.
+              </p>
+
+              <!-- lista dei barbieri -->
+              <div *ngFor="let barbiere of barbieri" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span>{{ barbiere.name }}</span>
+
+                <button mat-stroked-button color="warn" (click)="rimuoviBarbiere(barbiere.id)">
+                  Rimuovi
+                </button>
+              </div>
+
             </mat-card-content>
           </mat-card>
 

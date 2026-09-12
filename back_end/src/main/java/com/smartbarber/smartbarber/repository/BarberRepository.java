@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +19,10 @@ public interface BarberRepository extends JpaRepository<Barber, Long> {
 
     // trovo tutti i dipendenti di un determinato salone
     List<Barber> findBySalonId(Long salonId);
+
+    // trovo tutti i dipendenti ATTIVI di un determinato salone (fondamentale per nascondere i licenziati ai clienti)
+    List<Barber> findBySalonIdAndIsActiveTrue(Long salonId);
+
+    // trovo tutti i barbieri attivi in generale
+    List<Barber> findAllByIsActiveTrue();
 }

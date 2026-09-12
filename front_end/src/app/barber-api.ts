@@ -25,6 +25,11 @@ export class BarberApiService {
     return this.http.post<Salon>(`${this.baseUrl}/salons`, null, { params });
   }
 
+  deleteBarber(barberId: number) {
+    // Sostituisci '/api' con l'URL base corretto se nel tuo servizio è definito diversamente (es. this.baseUrl)
+    return this.http.delete(`/api/barbers/${barberId}`);
+  }
+
   getBarbersBySalon(salonId: number): Observable<Barber[]> {
     return this.http.get<Barber[]>(`${this.baseUrl}/salons/${salonId}/barbers`);
   }
@@ -74,5 +79,9 @@ export class BarberApiService {
   getBookedTimes(barberId: number, date: string) {
     const params = new HttpParams().set('barberId', barberId.toString()).set('date', date);
     return this.http.get<string[]>(`${this.baseUrl}/appointments/booked-times`, { params });
+  }
+
+  getMyBarbers() {
+    return this.http.get<Barber[]>('/api/barbers/my-barbers');
   }
 }

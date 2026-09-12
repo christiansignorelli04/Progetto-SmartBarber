@@ -37,7 +37,7 @@ export class AppComponent implements OnInit {
   profiloForm = { firstName: "", lastName: "", email: "", phoneNumber: "" };
 
   newSalonName = ""; newSalonCity = ""; newSalonAddress = "";
-  newSalonClosedDays: string[] = []; // <-- FASE 4: Giorni chiusi
+  newSalonClosedDays: string[] = [];
   cittaRicercata = ""; ricercaEffettuata = false;
   faseAttuale: "ricerca" | "prenotazione" = "ricerca";
   saloneSelezionato?: Salon;
@@ -45,7 +45,7 @@ export class AppComponent implements OnInit {
   trattamentiSalone: Treatment[] = []; operatoriSalone: Barber[] = [];
   trattamentoSceltoId?: number; operatoreSceltoId?: number;
   dataScelta: string = ""; oraScelta: string = "";
-  oggi: string = ""; // <-- FASE 4: Data odierna
+  oggi: string = "";
 
   orariDisponibili: string[] = [
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00",
@@ -57,6 +57,7 @@ export class AppComponent implements OnInit {
 
   newBarberName = ""; newTreatmentName = ""; newTreatmentPrice?: number;
   appuntamentiGestore: Appointment[] = [];
+  barbieri: Barber[] = []; // uso un array per la lista del personale nell'Area Business
 
   constructor(public readonly keycloak: KeycloakService, private readonly api: BarberApiService, private cdr: ChangeDetectorRef) {}
 
@@ -81,6 +82,15 @@ export class AppComponent implements OnInit {
         error: (err) => { console.error(err); this.cdr.detectChanges(); }
       });
       this.caricaCalendarioGestore();
+
+      // scarico la lista dei barbieri attivi salvati nel database
+      this.api.getMyBarbers().subscribe({
+        next: (data) => {
+          this.barbieri = data;
+          this.cdr.detectChanges();
+        },
+        error: (err) => console.error("Errore nel caricamento barbieri", err)
+      });
     }
     this.cdr.detectChanges();
   }
@@ -169,7 +179,7 @@ export class AppComponent implements OnInit {
     if (this.operatoreSceltoId && this.dataScelta) {
       const selectedDate = new Date(this.dataScelta);
       // controllo le festività
-      const monthDay = this.dataScelta.substring(5); // Estrae MM-DD
+      const monthDay = this.dataScelta.substring(5); // estraggo mese-giorno
       const holidays = ["01-01", "01-06", "04-25", "05-01", "06-02", "08-15", "11-01", "12-08", "12-25", "12-26"];
       if (holidays.includes(monthDay)) {
         this.errore = "Il salone è chiuso in questa data per festività (Giorno Rosso).";
@@ -235,7 +245,12 @@ export class AppComponent implements OnInit {
   aggiungiBarbiereGestore(): void {
     if (!this.newBarberName) { this.errore = "Inserisci il nome."; return; }
     this.api.addBarber(this.newBarberName).subscribe({
-      next: () => { this.messaggio = "Barbiere aggiunto!"; this.newBarberName = ""; this.cdr.detectChanges(); },
+      next: (nuovoBarbiere) => {
+        this.messaggio = "Barbiere aggiunto!";
+        this.newBarberName = "";
+        if(nuovoBarbiere) { this.barbieri.push(nuovoBarbiere); } // aggiungo il barbiere alla lista visibile
+        this.cdr.detectChanges();
+      },
       error: (err) => { this.errore = err.error?.message || "Errore."; this.cdr.detectChanges(); }
     });
   }
@@ -253,5 +268,25 @@ export class AppComponent implements OnInit {
       next: (data) => { this.appuntamentiGestore = data; this.cdr.detectChanges(); },
       error: (err) => { console.error(err); this.cdr.detectChanges(); }
     });
+  }
+
+  rimuoviBarbiere(idBarbiere: number) {
+    // chiedo la conferma per evitare click accidentali
+    const conferma = confirm("Sei sicuro di voler rimuovere questo barbiere? Lo storico delle sue prenotazioni verrà mantenuto.");
+
+    if (conferma) {
+      // chiamo l'API di Spring Boot per il Soft Delete
+      this.api.deleteBarber(idBarbiere).subscribe({
+        next: (risposta) => {
+          // aggiorno la lista visiva eliminando il barbiere rimosso
+          // senza dover ricaricare la pagina intera
+          this.barbieri = this.barbieri.filter(b => b.id !== idBarbiere);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error("Errore durante la rimozione del barbiere", err);
+        }
+      });
+    }
   }
 }
